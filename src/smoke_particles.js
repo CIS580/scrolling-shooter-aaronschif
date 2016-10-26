@@ -1,17 +1,7 @@
 "use strict";
 
-/**
- * @module SmokeParticles
- * A class for managing a particle engine that
- * emulates a smoke trail
- */
 module.exports = exports = SmokeParticles;
 
-/**
- * @constructor SmokeParticles
- * Creates a SmokeParticles engine of the specified size
- * @param {uint} size the maximum number of particles to exist concurrently
- */
 function SmokeParticles(maxSize) {
   this.pool = new Float32Array(3 * maxSize);
   this.start = 0;
@@ -20,11 +10,6 @@ function SmokeParticles(maxSize) {
   this.max = maxSize;
 }
 
-/**
- * @function emit
- * Adds a new particle at the given position
- * @param {Vector} position
-*/
 SmokeParticles.prototype.emit = function(position) {
   if(this.end != this.max) {
     this.pool[3*this.end] = position.x;
@@ -39,11 +24,6 @@ SmokeParticles.prototype.emit = function(position) {
   }
 }
 
-/**
- * @function update
- * Updates the particles
- * @param {DOMHighResTimeStamp} elapsedTime
- */
 SmokeParticles.prototype.update = function(elapsedTime) {
   function updateParticle(i) {
     this.pool[3*i+2] += elapsedTime;
@@ -64,12 +44,6 @@ SmokeParticles.prototype.update = function(elapsedTime) {
   }
 }
 
-/**
- * @function render
- * Renders all bullets in our array.
- * @param {DOMHighResTimeStamp} elapsedTime
- * @param {CanvasRenderingContext2D} ctx
- */
 SmokeParticles.prototype.render = function(elapsedTime, ctx) {
   function renderParticle(i){
     var alpha = 1 - (this.pool[3*i+2] / 1000);

@@ -1,24 +1,13 @@
 "use strict";
 
-/* Classes and Libraries */
 const Vector = require('./vector');
 const Missile = require('./missile');
 
-/* Constants */
 const PLAYER_SPEED = 5;
 const BULLET_SPEED = 10;
 
-/**
- * @module Player
- * A class representing a player's helicopter
- */
 module.exports = exports = Player;
 
-/**
- * @constructor Player
- * Creates a player
- * @param {BulletPool} bullets the bullet pool
- */
 function Player(bullets, missiles) {
   this.missiles = missiles;
   this.missileCount = 4;
@@ -30,13 +19,6 @@ function Player(bullets, missiles) {
   this.img.src = 'assets/tyrian.shp.007D3C.png';
 }
 
-/**
- * @function update
- * Updates the player based on the supplied input
- * @param {DOMHighResTimeStamp} elapedTime
- * @param {Input} input object defining input, must have
- * boolean properties: up, left, right, down
- */
 Player.prototype.update = function(elapsedTime, input) {
 
   // set the velocity
@@ -62,12 +44,6 @@ Player.prototype.update = function(elapsedTime, input) {
   if(this.position.y > 786) this.position.y = 786;
 }
 
-/**
- * @function render
- * Renders the player helicopter in world coordinates
- * @param {DOMHighResTimeStamp} elapsedTime
- * @param {CanvasRenderingContext2D} ctx
- */
 Player.prototype.render = function(elapasedTime, ctx) {
   var offset = this.angle * 23;
   ctx.save();
@@ -76,22 +52,12 @@ Player.prototype.render = function(elapasedTime, ctx) {
   ctx.restore();
 }
 
-/**
- * @function fireBullet
- * Fires a bullet
- * @param {Vector} direction
- */
 Player.prototype.fireBullet = function(direction) {
   var position = Vector.add(this.position, {x:30, y:30});
   var velocity = Vector.scale(Vector.normalize(direction), BULLET_SPEED);
   this.bullets.add(position, velocity);
 }
 
-/**
- * @function fireMissile
- * Fires a missile, if the player still has missiles
- * to fire.
- */
 Player.prototype.fireMissile = function() {
   if(this.missileCount > 0){
     var position = Vector.add(this.position, {x:0, y:30})
