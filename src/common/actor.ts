@@ -1,9 +1,18 @@
 "use strict";
 
-import {EventListener} from "./events.js";
+import {EventListener} from "./events";
 
 
 export class Actor {
+    events: EventListener
+    world
+    x
+    y
+    width
+    height
+    controlState
+    renderState
+
     constructor(world) {
         this.events = new EventListener();
 

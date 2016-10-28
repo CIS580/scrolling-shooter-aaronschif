@@ -1,8 +1,4 @@
-"use strict";
-
-module.exports = exports = Game;
-
-function Game(screen, updateFunction, renderFunction) {
+export function Game(screen, updateFunction, renderFunction) {
   this.update = updateFunction;
   this.render = renderFunction;
 

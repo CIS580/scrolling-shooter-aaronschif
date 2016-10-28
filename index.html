@@ -3,11 +3,13 @@
   <head>
     <title>Scrolling Shooter</title>
     <link type="text/css" rel="stylesheet" href="game.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/systemjs/0.19.40/system.js" integrity="sha256-jgem6eKIlB5g6wnGTGvgBYGNM5TgYz3JwIIEGLO/aCk=" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="bundle.js"></script>
+    <script>SystemJS.import('./app')</script>
   </head>
   <body>
     <h1>Play Scrolling Shooter</h1>
     <canvas id="screen" width="1024" height="786"></canvas>
     <h2>Instructions</h2>
-    <script type="text/javascript" src="bundle.js"></script>
   </body>
 </html>

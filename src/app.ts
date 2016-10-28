@@ -1,11 +1,8 @@
-"use strict";
-
-const Game = require('./game');
-const Vector = require('./vector');
-const Camera = require('./camera');
-const Player = require('./player');
-const BulletPool = require('./bullet_pool');
-
+import {Game} from './game'
+import * as Vector from './vector'
+import {Camera} from './camera'
+import {Player} from './player'
+import {BulletPool} from './bullet_pool'
 
 var canvas = document.getElementById('screen');
 var game = new Game(canvas, update, render);
@@ -140,3 +137,5 @@ function renderWorld(elapsedTime, ctx) {
 function renderGUI(elapsedTime, ctx) {
   // TODO: Render the GUI
 }
+
+console.log('asdf')

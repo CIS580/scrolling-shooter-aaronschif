@@ -1,6 +1,7 @@
-"use strict";
-
 export class Controller {
+    input
+    savedInput
+
     constructor() {
         this.input = {
             up: false,

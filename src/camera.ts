@@ -1,10 +1,7 @@
-"use strict";
+import * as Vector from './vector'
 
-const Vector = require('./vector');
 
-module.exports = exports = Camera;
-
-function Camera(screen) {
+export function Camera(screen) {
   this.x = 0;
   this.y = 0;
   this.width = screen.width;

@@ -1,7 +1,6 @@
-"use strict";
-
-
 export class EventListener {
+    events
+
     constructor() {
         this.events = {};
     }

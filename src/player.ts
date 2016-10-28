@@ -1,14 +1,12 @@
 "use strict";
 
-const Vector = require('./vector');
-const Missile = require('./missile');
+import * as Vector from './vector'
+import {Missile} from './missile'
 
 const PLAYER_SPEED = 5;
 const BULLET_SPEED = 10;
 
-module.exports = exports = Player;
-
-function Player(bullets, missiles) {
+export function Player(bullets, missiles) {
   this.missiles = missiles;
   this.missileCount = 4;
   this.bullets = bullets;

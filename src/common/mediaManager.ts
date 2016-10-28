@@ -1,6 +1,10 @@
-'use strict';
-
 class ImageHandle {
+    img
+    x
+    y
+    width
+    height
+
     constructor ({img, x, y, w, h}) {
         this.img = img;
         this.x = x;

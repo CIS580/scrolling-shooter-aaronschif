@@ -1,8 +1,5 @@
-"use strict";
 
-module.exports = exports = SmokeParticles;
-
-function SmokeParticles(maxSize) {
+export function SmokeParticles(maxSize) {
   this.pool = new Float32Array(3 * maxSize);
   this.start = 0;
   this.end = 0;
