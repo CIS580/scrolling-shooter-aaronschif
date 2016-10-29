@@ -1,11 +1,3 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator.throw(value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments)).next());
-    });
-};
 System.register("common/mediaManager", [], function(exports_1, context_1) {
     "use strict";
     var __moduleName = context_1 && context_1.id;
@@ -14,12 +6,14 @@ System.register("common/mediaManager", [], function(exports_1, context_1) {
         setters:[],
         execute: function() {
             ImageHandle = class ImageHandle {
-                constructor({ img, x, y, w, h }) {
+                constructor(img, setup) {
+                    this.img = null;
+                    this.x = 0;
+                    this.y = 0;
+                    this.width = 0;
+                    this.height = 0;
                     this.img = img;
-                    this.x = x;
-                    this.y = y;
-                    this.width = w;
-                    this.height = h;
+                    this.img.addEventListener('load', (img) => setup(this, img));
                 }
                 draw(ctx, x, y, sx = 1, sy = 1) {
                     ctx.drawImage(this.img, this.x, this.y, this.width, this.height, x, y, this.width * sx, this.height * sy);
@@ -31,40 +25,25 @@ System.register("common/mediaManager", [], function(exports_1, context_1) {
             };
             MediaManager = class MediaManager {
                 constructor() {
+                    this.pending = [];
+                }
+                loaded() {
+                    return Promise.all(this.pending);
                 }
                 fetchSprite(url) {
-                    return __awaiter(this, void 0, void 0, function* () {
-                        let sprite = new Image();
-                        let p = new Promise((resolve) => { sprite.onload = resolve; });
-                        sprite.src = url;
-                        yield p;
-                        return new ImageHandle({
-                            img: sprite,
-                            x: 0,
-                            y: 0,
-                            w: sprite.width,
-                            h: sprite.height
-                        });
+                    let sprite = new Image();
+                    let p = new Promise((resolve) => {
+                        sprite.addEventListener('load', resolve);
                     });
-                }
-                fetchSpriteSheet(url, sprites) {
-                    let spriteSheet = new Image();
-                    spriteSheet.src = url;
-                    let spriteHandles = {};
-                    for (let i = 0; i < sprites.length; i++) {
-                        let sprite = sprites[i];
-                        spriteHandles[i] = new ImageHandle({
-                            img: spriteSheet,
-                            x: sprite.x,
-                            y: sprite.y,
-                            w: sprite.w,
-                            h: sprite.h,
-                        });
-                        if (sprite.name) {
-                            spriteHandles[sprite.name] = spriteHandles[i];
-                        }
-                    }
-                    return spriteHandles;
+                    this.pending.push(p);
+                    sprite.src = url;
+                    return new ImageHandle(sprite, (handle, event) => {
+                        let img = event.target;
+                        handle.x = 0;
+                        handle.y = 0;
+                        handle.height = img.naturalHeight;
+                        handle.width = img.naturalWidth;
+                    });
                 }
             };
             exports_1("MediaManager", MediaManager);
@@ -180,7 +159,7 @@ System.register("common/game", [], function(exports_5, context_5) {
         execute: function() {
             Game = class Game {
                 constructor() {
-                    this.width = 780;
+                    this.width = 620;
                     this.height = 480;
                     this.framerate = 60;
                 }
@@ -223,7 +202,7 @@ System.register("app", ["common/mediaManager", "common/actor", "common/game"], f
     "use strict";
     var __moduleName = context_6 && context_6.id;
     var mediaManager_1, actor_1, game_1;
-    var mediaManager, cloudSprite, PlayerShip, SSGame, game;
+    var mediaManager, cloudSprite, PlayerShip, SSGame;
     return {
         setters:[
             function (mediaManager_1_1) {
@@ -244,14 +223,19 @@ System.register("app", ["common/mediaManager", "common/actor", "common/game"], f
                 render(dt, ctx) {
                     ctx.fillStyle = 'black';
                     ctx.fillRect(20, 20, 20, 20);
-                    cloudSprite.then((e) => e.draw(ctx, 0, 0));
+                    ctx.fillRect(40, 40, 2000, 20);
+                    ctx.fillStyle = 'green';
+                    ctx.fillRect(0, 0, cloudSprite.width, cloudSprite.height);
+                    cloudSprite.draw(ctx, 0, 0, .2, .2);
                 }
                 update(dt) {
                 }
             };
-            game = new SSGame();
-            game.install('#game-window');
-            game.start();
+            mediaManager.loaded().then(() => {
+                let game = new SSGame();
+                game.install('#game-window');
+                game.start();
+            });
         }
     }
 });

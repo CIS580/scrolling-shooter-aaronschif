@@ -9,7 +9,7 @@ export class Game {
     _lastTick: number
 
     constructor() {
-        this.width = 780
+        this.width = 620
         this.height = 480
         this.framerate = 60
     }

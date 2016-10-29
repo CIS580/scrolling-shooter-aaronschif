@@ -1,16 +1,13 @@
 class ImageHandle {
-    img
-    x
-    y
-    width
-    height
+    img = null
+    x = 0
+    y = 0
+    width = 0
+    height = 0
 
-    constructor ({img, x, y, w, h}) {
-        this.img = img;
-        this.x = x;
-        this.y = y;
-        this.width = w;
-        this.height = h;
+    constructor (img: HTMLImageElement, setup) {
+        this.img = img
+        this.img.addEventListener('load', (img)=>setup(this, img))
     }
 
     draw (ctx: CanvasRenderingContext2D, x, y, sx=1, sy=1) {
@@ -29,45 +26,32 @@ class AudioHandle {
 }
 
 export class MediaManager {
+    pending: Array<Promise<any>>
+
     constructor () {
+        this.pending = []
 
     }
 
-    async fetchSprite (url) {
+    loaded() {
+        return Promise.all(this.pending)
+    }
+
+    fetchSprite (url) {
         let sprite = new Image()
-        let p = new Promise(
-            (resolve)=>{sprite.onload = resolve})
-        sprite.src = url
-        await p
-
-        return new ImageHandle({
-            img: sprite,
-            x: 0,
-            y: 0,
-            w: sprite.width,
-            h: sprite.height
+        let p = new Promise((resolve)=>{
+            sprite.addEventListener('load', resolve)
         })
-    }
-
-    fetchSpriteSheet (url, sprites) {
-        let spriteSheet = new Image();
-        spriteSheet.src = url;
-
-        let spriteHandles = {};
-        for (let i = 0; i < sprites.length; i++) {
-            let sprite = sprites[i];
-            spriteHandles[i] = new ImageHandle(
-                {
-                    img: spriteSheet,
-                    x: sprite.x,
-                    y: sprite.y,
-                    w: sprite.w,
-                    h: sprite.h,
-                })
-            if (sprite.name) {
-                spriteHandles[sprite.name] = spriteHandles[i];
+        this.pending.push(p)
+        sprite.src = url
+        return new ImageHandle(
+            sprite, (handle: ImageHandle, event)=>{
+                let img: HTMLImageElement = event.target
+                handle.x = 0
+                handle.y = 0
+                handle.height = img.naturalHeight
+                handle.width = img.naturalWidth
             }
-        }
-        return spriteHandles;
+        )
     }
 }
