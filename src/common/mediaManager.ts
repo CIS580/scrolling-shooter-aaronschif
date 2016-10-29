@@ -13,7 +13,7 @@ class ImageHandle {
         this.height = h;
     }
 
-    draw (ctx, x, y, sx=1, sy=1) {
+    draw (ctx: CanvasRenderingContext2D, x, y, sx=1, sy=1) {
         ctx.drawImage(
             this.img,
             this.x, this.y, this.width, this.height,
@@ -31,6 +31,22 @@ class AudioHandle {
 export class MediaManager {
     constructor () {
 
+    }
+
+    async fetchSprite (url) {
+        let sprite = new Image()
+        let p = new Promise(
+            (resolve)=>{sprite.onload = resolve})
+        sprite.src = url
+        await p
+
+        return new ImageHandle({
+            img: sprite,
+            x: 0,
+            y: 0,
+            w: sprite.width,
+            h: sprite.height
+        })
     }
 
     fetchSpriteSheet (url, sprites) {

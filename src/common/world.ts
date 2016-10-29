@@ -1,10 +1,10 @@
-class Scene {
+export class Scene {
     constructor() {
 
     }
 }
 
-class World {
+export class World {
     constructor() {
 
     }

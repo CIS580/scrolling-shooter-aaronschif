@@ -1,6 +1,263 @@
-System.register("game", [], function(exports_1, context_1) {
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator.throw(value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments)).next());
+    });
+};
+System.register("common/mediaManager", [], function(exports_1, context_1) {
     "use strict";
     var __moduleName = context_1 && context_1.id;
+    var ImageHandle, AudioHandle, MediaManager;
+    return {
+        setters:[],
+        execute: function() {
+            ImageHandle = class ImageHandle {
+                constructor({ img, x, y, w, h }) {
+                    this.img = img;
+                    this.x = x;
+                    this.y = y;
+                    this.width = w;
+                    this.height = h;
+                }
+                draw(ctx, x, y, sx = 1, sy = 1) {
+                    ctx.drawImage(this.img, this.x, this.y, this.width, this.height, x, y, this.width * sx, this.height * sy);
+                }
+            };
+            AudioHandle = class AudioHandle {
+                constructor() {
+                }
+            };
+            MediaManager = class MediaManager {
+                constructor() {
+                }
+                fetchSprite(url) {
+                    return __awaiter(this, void 0, void 0, function* () {
+                        let sprite = new Image();
+                        let p = new Promise((resolve) => { sprite.onload = resolve; });
+                        sprite.src = url;
+                        yield p;
+                        return new ImageHandle({
+                            img: sprite,
+                            x: 0,
+                            y: 0,
+                            w: sprite.width,
+                            h: sprite.height
+                        });
+                    });
+                }
+                fetchSpriteSheet(url, sprites) {
+                    let spriteSheet = new Image();
+                    spriteSheet.src = url;
+                    let spriteHandles = {};
+                    for (let i = 0; i < sprites.length; i++) {
+                        let sprite = sprites[i];
+                        spriteHandles[i] = new ImageHandle({
+                            img: spriteSheet,
+                            x: sprite.x,
+                            y: sprite.y,
+                            w: sprite.w,
+                            h: sprite.h,
+                        });
+                        if (sprite.name) {
+                            spriteHandles[sprite.name] = spriteHandles[i];
+                        }
+                    }
+                    return spriteHandles;
+                }
+            };
+            exports_1("MediaManager", MediaManager);
+        }
+    }
+});
+System.register("common/events", [], function(exports_2, context_2) {
+    "use strict";
+    var __moduleName = context_2 && context_2.id;
+    var EventListener;
+    return {
+        setters:[],
+        execute: function() {
+            EventListener = class EventListener {
+                constructor() {
+                    this.events = {};
+                }
+                addEventListener(name, func) {
+                    let events = this.events[name] || [];
+                    this.events[name] = events;
+                    events.push(func);
+                }
+                emit(name, args) {
+                    let events = this.events[name] || [];
+                    for (let ev of events) {
+                        ev(args);
+                    }
+                }
+            };
+            exports_2("EventListener", EventListener);
+        }
+    }
+});
+System.register("common/actor", ["common/events"], function(exports_3, context_3) {
+    "use strict";
+    var __moduleName = context_3 && context_3.id;
+    var events_1;
+    var Actor;
+    return {
+        setters:[
+            function (events_1_1) {
+                events_1 = events_1_1;
+            }],
+        execute: function() {
+            Actor = class Actor {
+                constructor(world) {
+                    this.events = new events_1.EventListener();
+                    this.world = world;
+                    this.x = 0;
+                    this.y = 0;
+                    this.width = 64;
+                    this.height = 64;
+                    this.controlState = this.baseControlState.bind(this)();
+                    this.renderState = this.baseRenderState.bind(this)();
+                }
+                getHitBoxes() {
+                    return [];
+                }
+                collect() {
+                    return false;
+                }
+                update(dt) {
+                    let cur = this.controlState.next({ dt: dt });
+                    if (cur.value != null) {
+                        this.controlState = cur.value;
+                    }
+                    else if (cur.done) {
+                        this.controlState = this.baseControlState.bind(this)();
+                    }
+                }
+                render(dt, ctx) {
+                    let cur = this.renderState.next({ dt: dt, ctx: ctx });
+                    if (cur.value != null) {
+                        this.renderState = cur.value;
+                    }
+                    else if (cur.done) {
+                        this.renderState = this.baseRenderState.bind(this)();
+                    }
+                }
+                *baseControlState() { }
+                *baseRenderState() { }
+            };
+            exports_3("Actor", Actor);
+        }
+    }
+});
+System.register("common/world", [], function(exports_4, context_4) {
+    "use strict";
+    var __moduleName = context_4 && context_4.id;
+    var Scene, World;
+    return {
+        setters:[],
+        execute: function() {
+            Scene = class Scene {
+                constructor() {
+                }
+            };
+            exports_4("Scene", Scene);
+            World = class World {
+                constructor() {
+                }
+            };
+            exports_4("World", World);
+        }
+    }
+});
+System.register("common/game", [], function(exports_5, context_5) {
+    "use strict";
+    var __moduleName = context_5 && context_5.id;
+    var Game;
+    return {
+        setters:[],
+        execute: function() {
+            Game = class Game {
+                constructor() {
+                    this.width = 780;
+                    this.height = 480;
+                    this.framerate = 60;
+                }
+                update(dt) {
+                }
+                render(dt, ctx) {
+                }
+                install(place) {
+                    let canvas = document.createElement('canvas');
+                    canvas.width = this.width;
+                    canvas.height = this.height;
+                    document.querySelector(place).appendChild(canvas);
+                    let backCanvas = document.createElement('canvas');
+                    backCanvas.width = this.width;
+                    backCanvas.height = this.height;
+                    this.buffer = canvas.getContext('2d');
+                    this.backBuffer = backCanvas.getContext('2d');
+                    this.canvas = canvas;
+                    this.backCanvas = backCanvas;
+                }
+                start() {
+                    this._lastTick = performance.now();
+                    setInterval(this.tick.bind(this), 1000 / this.framerate);
+                }
+                tick() {
+                    let now = performance.now();
+                    let dt = now - this._lastTick;
+                    this._lastTick = now;
+                    this.update(dt);
+                    this.render(dt, this.backBuffer);
+                    this.buffer.drawImage(this.backCanvas, 0, 0);
+                    return true;
+                }
+            };
+            exports_5("Game", Game);
+        }
+    }
+});
+System.register("app", ["common/mediaManager", "common/actor", "common/game"], function(exports_6, context_6) {
+    "use strict";
+    var __moduleName = context_6 && context_6.id;
+    var mediaManager_1, actor_1, game_1;
+    var mediaManager, cloudSprite, PlayerShip, SSGame, game;
+    return {
+        setters:[
+            function (mediaManager_1_1) {
+                mediaManager_1 = mediaManager_1_1;
+            },
+            function (actor_1_1) {
+                actor_1 = actor_1_1;
+            },
+            function (game_1_1) {
+                game_1 = game_1_1;
+            }],
+        execute: function() {
+            mediaManager = new mediaManager_1.MediaManager();
+            cloudSprite = mediaManager.fetchSprite('./assets/cloud.png');
+            PlayerShip = class PlayerShip extends actor_1.Actor {
+            };
+            SSGame = class SSGame extends game_1.Game {
+                render(dt, ctx) {
+                    ctx.fillStyle = 'black';
+                    ctx.fillRect(20, 20, 20, 20);
+                    cloudSprite.then((e) => e.draw(ctx, 0, 0));
+                }
+                update(dt) {
+                }
+            };
+            game = new SSGame();
+            game.install('#game-window');
+            game.start();
+        }
+    }
+});
+System.register("game", [], function(exports_7, context_7) {
+    "use strict";
+    var __moduleName = context_7 && context_7.id;
     function Game(screen, updateFunction, renderFunction) {
         this.update = updateFunction;
         this.render = renderFunction;
@@ -13,7 +270,7 @@ System.register("game", [], function(exports_1, context_1) {
         this.oldTime = performance.now();
         this.paused = false;
     }
-    exports_1("Game", Game);
+    exports_7("Game", Game);
     return {
         setters:[],
         execute: function() {
@@ -32,50 +289,50 @@ System.register("game", [], function(exports_1, context_1) {
         }
     }
 });
-System.register("vector", [], function(exports_2, context_2) {
+System.register("vector", [], function(exports_8, context_8) {
     "use strict";
-    var __moduleName = context_2 && context_2.id;
+    var __moduleName = context_8 && context_8.id;
     function scale(a, scale) {
         return { x: a.x * scale, y: a.y * scale };
     }
-    exports_2("scale", scale);
+    exports_8("scale", scale);
     function add(a, b) {
         return { x: a.x + b.x, y: a.y + b.y };
     }
-    exports_2("add", add);
+    exports_8("add", add);
     function subtract(a, b) {
         return { x: a.x - b.x, y: a.y - b.y };
     }
-    exports_2("subtract", subtract);
+    exports_8("subtract", subtract);
     function rotate(a, angle) {
         return {
             x: a.x * Math.cos(angle) - a.y * Math.sin(angle),
             y: a.x * Math.sin(angle) + a.y * Math.cos(angle)
         };
     }
-    exports_2("rotate", rotate);
+    exports_8("rotate", rotate);
     function dotProduct(a, b) {
         return a.x * b.x + a.y * b.y;
     }
-    exports_2("dotProduct", dotProduct);
+    exports_8("dotProduct", dotProduct);
     function magnitude(a) {
         return Math.sqrt(a.x * a.x + a.y * a.y);
     }
-    exports_2("magnitude", magnitude);
+    exports_8("magnitude", magnitude);
     function normalize(a) {
         var mag = magnitude(a);
         return { x: a.x / mag, y: a.y / mag };
     }
-    exports_2("normalize", normalize);
+    exports_8("normalize", normalize);
     return {
         setters:[],
         execute: function() {
         }
     }
 });
-System.register("camera", ["vector"], function(exports_3, context_3) {
+System.register("camera", ["vector"], function(exports_9, context_9) {
     "use strict";
-    var __moduleName = context_3 && context_3.id;
+    var __moduleName = context_9 && context_9.id;
     var Vector;
     function Camera(screen) {
         this.x = 0;
@@ -83,7 +340,7 @@ System.register("camera", ["vector"], function(exports_3, context_3) {
         this.width = screen.width;
         this.height = screen.height;
     }
-    exports_3("Camera", Camera);
+    exports_9("Camera", Camera);
     return {
         setters:[
             function (Vector_1) {
@@ -107,9 +364,9 @@ System.register("camera", ["vector"], function(exports_3, context_3) {
         }
     }
 });
-System.register("missile", [], function(exports_4, context_4) {
+System.register("missile", [], function(exports_10, context_10) {
     "use strict";
-    var __moduleName = context_4 && context_4.id;
+    var __moduleName = context_10 && context_10.id;
     var Missile;
     return {
         setters:[],
@@ -118,13 +375,13 @@ System.register("missile", [], function(exports_4, context_4) {
                 constructor(position) {
                 }
             };
-            exports_4("Missile", Missile);
+            exports_10("Missile", Missile);
         }
     }
 });
-System.register("player", ["vector", "missile"], function(exports_5, context_5) {
+System.register("player", ["vector", "missile"], function(exports_11, context_11) {
     "use strict";
-    var __moduleName = context_5 && context_5.id;
+    var __moduleName = context_11 && context_11.id;
     var Vector, missile_1;
     var PLAYER_SPEED, BULLET_SPEED;
     function Player(bullets, missiles) {
@@ -137,7 +394,7 @@ System.register("player", ["vector", "missile"], function(exports_5, context_5) 
         this.img = new Image();
         this.img.src = 'assets/tyrian.shp.007D3C.png';
     }
-    exports_5("Player", Player);
+    exports_11("Player", Player);
     return {
         setters:[
             function (Vector_2) {
@@ -197,15 +454,15 @@ System.register("player", ["vector", "missile"], function(exports_5, context_5) 
         }
     }
 });
-System.register("bullet_pool", [], function(exports_6, context_6) {
+System.register("bullet_pool", [], function(exports_12, context_12) {
     "use strict";
-    var __moduleName = context_6 && context_6.id;
+    var __moduleName = context_12 && context_12.id;
     function BulletPool(maxSize) {
         this.pool = new Float32Array(4 * maxSize);
         this.end = 0;
         this.max = maxSize;
     }
-    exports_6("BulletPool", BulletPool);
+    exports_12("BulletPool", BulletPool);
     return {
         setters:[],
         execute: function() {
@@ -249,10 +506,10 @@ System.register("bullet_pool", [], function(exports_6, context_6) {
         }
     }
 });
-System.register("app", ["game", "camera", "player", "bullet_pool"], function(exports_7, context_7) {
+System.register("app_", ["game", "camera", "player", "bullet_pool"], function(exports_13, context_13) {
     "use strict";
-    var __moduleName = context_7 && context_7.id;
-    var game_1, camera_1, player_1, bullet_pool_1;
+    var __moduleName = context_13 && context_13.id;
+    var game_2, camera_1, player_1, bullet_pool_1;
     var canvas, game, input, camera, bullets, missiles, player, masterLoop;
     function update(elapsedTime) {
         player.update(elapsedTime, input);
@@ -292,8 +549,8 @@ System.register("app", ["game", "camera", "player", "bullet_pool"], function(exp
     }
     return {
         setters:[
-            function (game_1_1) {
-                game_1 = game_1_1;
+            function (game_2_1) {
+                game_2 = game_2_1;
             },
             function (camera_1_1) {
                 camera_1 = camera_1_1;
@@ -306,7 +563,7 @@ System.register("app", ["game", "camera", "player", "bullet_pool"], function(exp
             }],
         execute: function() {
             canvas = document.getElementById('screen');
-            game = new game_1.Game(canvas, update, render);
+            game = new game_2.Game(canvas, update, render);
             input = {
                 up: false,
                 down: false,
@@ -374,99 +631,9 @@ System.register("app", ["game", "camera", "player", "bullet_pool"], function(exp
         }
     }
 });
-System.register("common/events", [], function(exports_8, context_8) {
+System.register("common/input", [], function(exports_14, context_14) {
     "use strict";
-    var __moduleName = context_8 && context_8.id;
-    var EventListener;
-    return {
-        setters:[],
-        execute: function() {
-            EventListener = class EventListener {
-                constructor() {
-                    this.events = {};
-                }
-                addEventListener(name, func) {
-                    let events = this.events[name] || [];
-                    this.events[name] = events;
-                    events.push(func);
-                }
-                emit(name, args) {
-                    let events = this.events[name] || [];
-                    for (let ev of events) {
-                        ev(args);
-                    }
-                }
-            };
-            exports_8("EventListener", EventListener);
-        }
-    }
-});
-System.register("common/actor", ["common/events"], function(exports_9, context_9) {
-    "use strict";
-    var __moduleName = context_9 && context_9.id;
-    var events_1;
-    var Actor;
-    return {
-        setters:[
-            function (events_1_1) {
-                events_1 = events_1_1;
-            }],
-        execute: function() {
-            Actor = class Actor {
-                constructor(world) {
-                    this.events = new events_1.EventListener();
-                    this.world = world;
-                    this.x = 0;
-                    this.y = 0;
-                    this.width = 64;
-                    this.height = 64;
-                    this.controlState = this.baseControlState.bind(this)();
-                    this.renderState = this.baseRenderState.bind(this)();
-                }
-                getHitBoxes() {
-                    return [];
-                }
-                collect() {
-                    return false;
-                }
-                update(dt) {
-                    let cur = this.controlState.next({ dt: dt });
-                    if (cur.value != null) {
-                        this.controlState = cur.value;
-                    }
-                    else if (cur.done) {
-                        this.controlState = this.baseControlState.bind(this)();
-                    }
-                }
-                render(dt, ctx) {
-                    let cur = this.renderState.next({ dt: dt, ctx: ctx });
-                    if (cur.value != null) {
-                        this.renderState = cur.value;
-                    }
-                    else if (cur.done) {
-                        this.renderState = this.baseRenderState.bind(this)();
-                    }
-                }
-                *baseControlState() { }
-                *baseRenderState() { }
-            };
-            exports_9("Actor", Actor);
-        }
-    }
-});
-class Game {
-    constructor() {
-    }
-    update() {
-    }
-    render() {
-    }
-    start() {
-    }
-}
-System.register("common/input", [], function(exports_10, context_10) {
-    "use strict";
-    var __moduleName = context_10 && context_10.id;
+    var __moduleName = context_14 && context_14.id;
     var Controller;
     return {
         setters:[],
@@ -550,71 +717,13 @@ System.register("common/input", [], function(exports_10, context_10) {
                     });
                 }
             };
-            exports_10("Controller", Controller);
+            exports_14("Controller", Controller);
         }
     }
 });
-System.register("common/mediaManager", [], function(exports_11, context_11) {
+System.register("smoke_particles", [], function(exports_15, context_15) {
     "use strict";
-    var __moduleName = context_11 && context_11.id;
-    var ImageHandle, AudioHandle, MediaManager;
-    return {
-        setters:[],
-        execute: function() {
-            ImageHandle = class ImageHandle {
-                constructor({ img, x, y, w, h }) {
-                    this.img = img;
-                    this.x = x;
-                    this.y = y;
-                    this.width = w;
-                    this.height = h;
-                }
-                draw(ctx, x, y, sx = 1, sy = 1) {
-                    ctx.drawImage(this.img, this.x, this.y, this.width, this.height, x, y, this.width * sx, this.height * sy);
-                }
-            };
-            AudioHandle = class AudioHandle {
-                constructor() {
-                }
-            };
-            MediaManager = class MediaManager {
-                constructor() {
-                }
-                fetchSpriteSheet(url, sprites) {
-                    let spriteSheet = new Image();
-                    spriteSheet.src = url;
-                    let spriteHandles = {};
-                    for (let i = 0; i < sprites.length; i++) {
-                        let sprite = sprites[i];
-                        spriteHandles[i] = new ImageHandle({
-                            img: spriteSheet,
-                            x: sprite.x,
-                            y: sprite.y,
-                            w: sprite.w,
-                            h: sprite.h,
-                        });
-                        if (sprite.name) {
-                            spriteHandles[sprite.name] = spriteHandles[i];
-                        }
-                    }
-                    return spriteHandles;
-                }
-            };
-            exports_11("MediaManager", MediaManager);
-        }
-    }
-});
-class Scene {
-    constructor() {
-    }
-}
-class World {
-    constructor() {
-    }
-}
-System.register("smoke_particles", [], function(exports_12, context_12) {
-    "use strict";
-    var __moduleName = context_12 && context_12.id;
+    var __moduleName = context_15 && context_15.id;
     function SmokeParticles(maxSize) {
         this.pool = new Float32Array(3 * maxSize);
         this.start = 0;
@@ -622,7 +731,7 @@ System.register("smoke_particles", [], function(exports_12, context_12) {
         this.wrapped = false;
         this.max = maxSize;
     }
-    exports_12("SmokeParticles", SmokeParticles);
+    exports_15("SmokeParticles", SmokeParticles);
     return {
         setters:[],
         execute: function() {
