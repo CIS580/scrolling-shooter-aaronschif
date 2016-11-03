@@ -1,4 +1,6 @@
-export class Game {
+import {Drawable} from './drawable'
+
+export class Game  extends Drawable {
     canvas: HTMLCanvasElement
     backCanvas: HTMLCanvasElement
     buffer: CanvasRenderingContext2D
@@ -7,19 +9,15 @@ export class Game {
     width: number
     framerate: number
     _lastTick: number
+    _updateIter: Iterator<any>
+    _renderIter: Iterator<any>
+
 
     constructor() {
+        super()
         this.width = 620
         this.height = 480
         this.framerate = 60
-    }
-
-    update(dt: number) {
-
-    }
-
-    render(dt: number, ctx: CanvasRenderingContext2D) {
-
     }
 
     install(place: string) {
