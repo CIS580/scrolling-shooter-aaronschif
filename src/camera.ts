@@ -1,4 +1,4 @@
-import * as Vector from './vector'
+import {Vector} from './vector'
 
 
 export function Camera(screen) {

@@ -8,6 +8,7 @@ export class Controller {
             down: false,
             right: false,
             left: false,
+            space: false,
         };
         this.clear();
     }
@@ -24,34 +25,43 @@ export class Controller {
             up: false,
             down: false,
             right: false,
-            left: false
+            left: false,
+            space: false,
         };
     }
 
     attach() {
         window.addEventListener('keydown', (event) => {
             let preventDefault = false
-            switch (event.keyCode) {
-                case 38: case 87: // Up
+            switch (event.key) {
+                case "ArrowUp":
+                case "w":
                     preventDefault = true
                     this.input.up = true
                     this.savedInput.up = true
                     break
-                case 37: case 65: //Left
+                case "ArrowLeft":
+                case "a":
                     preventDefault = true
                     this.input.left = true
                     this.savedInput.left = true
                     break
-                case 39: case 68: // Right
+                case "ArrowRight":
+                case "d":
                     preventDefault = true
                     this.input.right = true
                     this.savedInput.right = true
                     break
-                case 40: case 83: // Down
+                case "ArrowDown":
+                case "s":
                     preventDefault = true
                     this.input.down = true
                     this.savedInput.down = true
                     break
+                case " ":
+                    preventDefault = true
+                    this.input.space = true
+                    this.savedInput.space = true
             }
             if (preventDefault) {
                 event.preventDefault()
@@ -59,19 +69,25 @@ export class Controller {
         });
 
         window.addEventListener('keyup', (event) => {
-            switch (event.keyCode) {
-                case 38: case 87: // Up
+            switch (event.key) {
+                case "ArrowUp":
+                case "w":
                     this.input.up = false
                     break
-                case 37: case 65: //Left
+                case "ArrowLeft":
+                case "a":
                     this.input.left = false
                     break
-                case 39: case 68: // Right
+                case "ArrowRight":
+                case "d":
                     this.input.right = false
                     break
-                case 40: case 83: // Down
+                case "ArrowDown":
+                case "s":
                     this.input.down = false
                     break
+                case " ":
+                    this.input.space = false
             }
         });
     }

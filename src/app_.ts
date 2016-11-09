@@ -1,5 +1,5 @@
 import {Game} from './game'
-import * as Vector from './vector'
+import {Vector} from './vector'
 import {Camera} from './camera'
 import {Player} from './player'
 import {BulletPool} from './bullet_pool'

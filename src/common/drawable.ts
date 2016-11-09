@@ -1,12 +1,16 @@
 // type State = Iterator<any>
 
-interface State extends Iterator<any> {
+interface ControlState extends Iterator<null|ControlState> {
+    next({dt: number})
+}
 
+interface RenderState extends Iterator<any> {
+    next({dt: number, ctx: CanvasRenderingContext2D})
 }
 
 export class Drawable {
-    controlState: State
-    renderState: State
+    controlState: ControlState
+    renderState: RenderState
 
     constructor() {
         this.controlState = this.baseControlState.bind(this)();
@@ -31,6 +35,6 @@ export class Drawable {
         }
     }
 
-    *baseControlState () {}
-    *baseRenderState () {}
+    *baseControlState () {while (true) {yield null}}
+    *baseRenderState () {while (true) {yield null}}
 }

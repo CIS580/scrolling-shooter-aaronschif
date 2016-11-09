@@ -1,6 +1,6 @@
 "use strict";
 
-import * as Vector from './vector'
+import {Vector} from './vector'
 import {Missile} from './missile'
 
 const PLAYER_SPEED = 5;

@@ -28,8 +28,12 @@ System.register("common/drawable", [], function(exports_1, context_1) {
                         this.renderState = this.baseRenderState.bind(this)();
                     }
                 }
-                *baseControlState() { }
-                *baseRenderState() { }
+                *baseControlState() { while (true) {
+                    yield null;
+                } }
+                *baseRenderState() { while (true) {
+                    yield null;
+                } }
             };
             exports_1("Drawable", Drawable);
         }
@@ -250,6 +254,7 @@ System.register("common/input", [], function(exports_7, context_7) {
                         down: false,
                         right: false,
                         left: false,
+                        space: false,
                     };
                     this.clear();
                 }
@@ -264,60 +269,67 @@ System.register("common/input", [], function(exports_7, context_7) {
                         up: false,
                         down: false,
                         right: false,
-                        left: false
+                        left: false,
+                        space: false,
                     };
                 }
                 attach() {
                     window.addEventListener('keydown', (event) => {
                         let preventDefault = false;
-                        switch (event.keyCode) {
-                            case 38:
-                            case 87:
+                        switch (event.key) {
+                            case "ArrowUp":
+                            case "w":
                                 preventDefault = true;
                                 this.input.up = true;
                                 this.savedInput.up = true;
                                 break;
-                            case 37:
-                            case 65:
+                            case "ArrowLeft":
+                            case "a":
                                 preventDefault = true;
                                 this.input.left = true;
                                 this.savedInput.left = true;
                                 break;
-                            case 39:
-                            case 68:
+                            case "ArrowRight":
+                            case "d":
                                 preventDefault = true;
                                 this.input.right = true;
                                 this.savedInput.right = true;
                                 break;
-                            case 40:
-                            case 83:
+                            case "ArrowDown":
+                            case "s":
                                 preventDefault = true;
                                 this.input.down = true;
                                 this.savedInput.down = true;
                                 break;
+                            case " ":
+                                preventDefault = true;
+                                this.input.space = true;
+                                this.savedInput.space = true;
                         }
                         if (preventDefault) {
                             event.preventDefault();
                         }
                     });
                     window.addEventListener('keyup', (event) => {
-                        switch (event.keyCode) {
-                            case 38:
-                            case 87:
+                        switch (event.key) {
+                            case "ArrowUp":
+                            case "w":
                                 this.input.up = false;
                                 break;
-                            case 37:
-                            case 65:
+                            case "ArrowLeft":
+                            case "a":
                                 this.input.left = false;
                                 break;
-                            case 39:
-                            case 68:
+                            case "ArrowRight":
+                            case "d":
                                 this.input.right = false;
                                 break;
-                            case 40:
-                            case 83:
+                            case "ArrowDown":
+                            case "s":
                                 this.input.down = false;
                                 break;
+                            case " ":
+                                this.input.space = false;
                         }
                     });
                 }
@@ -326,11 +338,101 @@ System.register("common/input", [], function(exports_7, context_7) {
         }
     }
 });
-System.register("app", ["common/drawable", "common/mediaManager", "common/actor", "common/game", "common/input"], function(exports_8, context_8) {
+System.register("bullet_pool", [], function(exports_8, context_8) {
     "use strict";
     var __moduleName = context_8 && context_8.id;
-    var drawable_2, mediaManager_1, actor_1, game_1, input_1;
-    var controller, mediaManager, cloudSprites, shipSprite, BackdropScene, PlayerShip, AlienShip, SSGame;
+    function BulletPool(maxSize) {
+        this.pool = new Float32Array(4 * maxSize);
+        this.end = 0;
+        this.max = maxSize;
+    }
+    exports_8("BulletPool", BulletPool);
+    return {
+        setters:[],
+        execute: function() {
+            BulletPool.prototype.add = function (position, velocity) {
+                if (this.end < this.max) {
+                    this.pool[4 * this.end] = position.x;
+                    this.pool[4 * this.end + 1] = position.y;
+                    this.pool[4 * this.end + 2] = velocity.x;
+                    this.pool[4 * this.end + 3] = velocity.y;
+                    this.end++;
+                }
+            };
+            BulletPool.prototype.update = function (elapsedTime, callback) {
+                for (var i = 0; i < this.end; i++) {
+                    this.pool[4 * i] += this.pool[4 * i + 2];
+                    this.pool[4 * i + 1] += this.pool[4 * i + 3];
+                    if (callback && callback({
+                        x: this.pool[4 * i],
+                        y: this.pool[4 * i + 1]
+                    })) {
+                        this.pool[4 * i] = this.pool[4 * (this.end - 1)];
+                        this.pool[4 * i + 1] = this.pool[4 * (this.end - 1) + 1];
+                        this.pool[4 * i + 2] = this.pool[4 * (this.end - 1) + 2];
+                        this.pool[4 * i + 3] = this.pool[4 * (this.end - 1) + 3];
+                        this.end--;
+                        i--;
+                    }
+                }
+            };
+            BulletPool.prototype.render = function (elapsedTime, ctx) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.fillStyle = "red";
+                for (var i = 0; i < this.end; i++) {
+                    ctx.moveTo(this.pool[4 * i], this.pool[4 * i + 1]);
+                    ctx.arc(this.pool[4 * i], this.pool[4 * i + 1], 2, 0, 2 * Math.PI);
+                }
+                ctx.fill();
+                ctx.restore();
+            };
+        }
+    }
+});
+System.register("vector", [], function(exports_9, context_9) {
+    "use strict";
+    var __moduleName = context_9 && context_9.id;
+    var Vector;
+    return {
+        setters:[],
+        execute: function() {
+            Vector = class Vector {
+                static scale(a, scale) {
+                    return { x: a.x * scale, y: a.y * scale };
+                }
+                static add(a, b) {
+                    return { x: a.x + b.x, y: a.y + b.y };
+                }
+                static subtract(a, b) {
+                    return { x: a.x - b.x, y: a.y - b.y };
+                }
+                static rotate(a, angle) {
+                    return {
+                        x: a.x * Math.cos(angle) - a.y * Math.sin(angle),
+                        y: a.x * Math.sin(angle) + a.y * Math.cos(angle)
+                    };
+                }
+                static dotProduct(a, b) {
+                    return a.x * b.x + a.y * b.y;
+                }
+                static magnitude(a) {
+                    return Math.sqrt(a.x * a.x + a.y * a.y);
+                }
+                static normalize(a) {
+                    var mag = Vector.magnitude(a);
+                    return { x: a.x / mag, y: a.y / mag };
+                }
+            };
+            exports_9("Vector", Vector);
+        }
+    }
+});
+System.register("app", ["common/drawable", "common/mediaManager", "common/actor", "common/game", "common/input", "bullet_pool", "vector"], function(exports_10, context_10) {
+    "use strict";
+    var __moduleName = context_10 && context_10.id;
+    var drawable_2, mediaManager_1, actor_1, game_1, input_1, bullet_pool_1, vector_1;
+    var controller, mediaManager, cloudSprites, shipSprite, BackdropScene, PlayerShip, Hud, AlienShip, SSGame;
     return {
         setters:[
             function (drawable_2_1) {
@@ -347,6 +449,12 @@ System.register("app", ["common/drawable", "common/mediaManager", "common/actor"
             },
             function (input_1_1) {
                 input_1 = input_1_1;
+            },
+            function (bullet_pool_1_1) {
+                bullet_pool_1 = bullet_pool_1_1;
+            },
+            function (vector_1_1) {
+                vector_1 = vector_1_1;
             }],
         execute: function() {
             controller = new input_1.Controller();
@@ -369,26 +477,26 @@ System.register("app", ["common/drawable", "common/mediaManager", "common/actor"
                     let cities = [];
                     while (true) {
                         let { dt, ctx } = yield null;
-                        clouds = clouds.filter((cloud) => cloud.y < 800);
-                        cities = cities.filter((cloud) => cloud.y < 800);
+                        clouds = clouds.filter((cloud) => cloud.y < this.height + 200);
+                        cities = cities.filter((cloud) => cloud.y < this.height + 200);
                         ctx.fillStyle = 'black';
                         ctx.fillRect(0, 0, this.width, this.height);
                         for (let city of cities) {
                             city.y += dt / 6;
                             city.sprite.draw(ctx, city.x, city.y, city.scale, city.scale);
                         }
-                        ctx.fillStyle = 'rgba(0, 0, 0, .7)';
+                        ctx.fillStyle = 'rgba(0, 0, 0, .5)';
                         ctx.fillRect(0, 0, this.width, this.height);
                         for (let cloud of clouds) {
                             cloud.y += dt / 3;
                             cloud.sprite.draw(ctx, cloud.x, cloud.y, cloud.scale, cloud.scale);
                         }
-                        ctx.fillStyle = 'rgba(0, 0, 0, .5)';
+                        ctx.fillStyle = 'rgba(0, 0, 0, .7)';
                         ctx.fillRect(0, 0, this.width, this.height);
                         if (Math.random() > .9) {
                             clouds.push({
                                 sprite: cloudSprites[(cloudSprites.length * Math.random()) | 0],
-                                x: -200 + (900) * Math.random(),
+                                x: -200 + (this.width + 400) * Math.random(),
                                 y: -400,
                                 scale: .2
                             });
@@ -396,7 +504,7 @@ System.register("app", ["common/drawable", "common/mediaManager", "common/actor"
                         if (Math.random() > .9) {
                             cities.push({
                                 sprite: cloudSprites[(cloudSprites.length * Math.random()) | 0],
-                                x: -200 + (900) * Math.random(),
+                                x: -200 + (this.width + 400) * Math.random(),
                                 y: -400,
                                 scale: -.2
                             });
@@ -408,11 +516,14 @@ System.register("app", ["common/drawable", "common/mediaManager", "common/actor"
             PlayerShip = class PlayerShip extends actor_1.Actor {
                 constructor(world) {
                     super(world);
+                    this.last_bullet = 0;
+                    this.bullet_pool = new bullet_pool_1.BulletPool(1000);
                 }
                 *baseRenderState() {
                     while (true) {
                         let { dt, ctx } = yield null;
                         shipSprite.draw(ctx, this.x, this.y, .1, .1);
+                        this.bullet_pool.render(dt, ctx);
                     }
                 }
                 *baseControlState() {
@@ -431,12 +542,46 @@ System.register("app", ["common/drawable", "common/mediaManager", "common/actor"
                         else if (controller.input.left) {
                             this.x -= dt * mod;
                         }
+                        if (controller.input.space) {
+                            this.fire();
+                        }
+                        this.bullet_pool.update(dt, ({ x, y }) => y < 0);
+                    }
+                }
+                fire() {
+                    if (this.last_bullet < performance.now() - 40) {
+                        this.bullet_pool.add({ x: this.x, y: this.y }, { x: 0, y: -3 });
+                        this.last_bullet = performance.now();
+                    }
+                }
+            };
+            Hud = class Hud extends drawable_2.Drawable {
+                constructor(player, width, height) {
+                    super();
+                    this.player = player;
+                    this.height = height;
+                    this.padding = 8;
+                }
+                *baseRenderState() {
+                    while (true) {
+                        let { dt, ctx } = yield null;
+                        let height = this.height - (this.padding * 2);
+                        ctx.fillStyle = 'grey';
+                        ctx.fillRect(this.padding, this.padding, 8, height);
+                        ctx.fillStyle = 'red';
+                        let missingLife = height - height * .9;
+                        ctx.fillRect(this.padding, this.padding + missingLife, 8, height - missingLife);
                     }
                 }
             };
             AlienShip = class AlienShip extends actor_1.Actor {
                 constructor(world) {
                     super(world);
+                    this.clockwise = -1;
+                    this.arcpos = 0;
+                    this.radius = 60;
+                    this.x = 200;
+                    this.y = 200;
                 }
                 *baseRenderState() {
                     const size = 14;
@@ -448,19 +593,45 @@ System.register("app", ["common/drawable", "common/mediaManager", "common/actor"
                         ctx.fill();
                     }
                 }
+                *baseControlState() {
+                    let rate = 32;
+                    while (true) {
+                        let { dt } = yield null;
+                        this.arcpos += this.clockwise * 1 / rate;
+                        let p = this.arcpos;
+                        let vec = {
+                            x: Math.sin(p),
+                            y: Math.cos(p)
+                        };
+                        vec = vector_1.Vector.normalize(vec);
+                        vec = vector_1.Vector.scale(vec, 1 / rate);
+                        if (Math.abs(this.arcpos) > Math.PI * 2 * Math.random() && Math.random() > .8) {
+                            this.clockwise *= -1;
+                        }
+                        this.x = vec.x * this.radius + this.x;
+                        this.y = vec.y * this.radius + this.y;
+                        if (this.world.out_of_bounds(this)) {
+                            this.collect = () => true;
+                        }
+                    }
+                }
             };
             SSGame = class SSGame extends game_1.Game {
                 constructor() {
                     super();
+                    this.width = 1200;
+                    this.height = 800;
                     this.player = new PlayerShip(this);
                     this.enemies = [new AlienShip(this)];
                 }
                 *baseRenderState() {
                     let backdrop = new BackdropScene(this.width, this.height);
+                    let hud = new Hud(this.player, this.width, this.height);
                     while (true) {
                         let { dt, ctx } = yield null;
                         backdrop.render(dt, ctx);
                         this.player.render(dt, ctx);
+                        hud.render(dt, ctx);
                         for (let enemy of this.enemies) {
                             enemy.render(dt, ctx);
                         }
@@ -470,10 +641,14 @@ System.register("app", ["common/drawable", "common/mediaManager", "common/actor"
                     while (true) {
                         let { dt } = yield null;
                         this.player.update(dt);
+                        this.enemies = this.enemies.filter((e) => !e.collect());
                         for (let enemy of this.enemies) {
                             enemy.update(dt);
                         }
                     }
+                }
+                out_of_bounds({ x, y }) {
+                    return x < 0 || y < 0 || x >= this.width || y >= this.height;
                 }
             };
             mediaManager.loaded().then(() => {
@@ -484,9 +659,9 @@ System.register("app", ["common/drawable", "common/mediaManager", "common/actor"
         }
     }
 });
-System.register("game", [], function(exports_9, context_9) {
+System.register("game", [], function(exports_11, context_11) {
     "use strict";
-    var __moduleName = context_9 && context_9.id;
+    var __moduleName = context_11 && context_11.id;
     function Game(screen, updateFunction, renderFunction) {
         this.update = updateFunction;
         this.render = renderFunction;
@@ -499,7 +674,7 @@ System.register("game", [], function(exports_9, context_9) {
         this.oldTime = performance.now();
         this.paused = false;
     }
-    exports_9("Game", Game);
+    exports_11("Game", Game);
     return {
         setters:[],
         execute: function() {
@@ -518,62 +693,21 @@ System.register("game", [], function(exports_9, context_9) {
         }
     }
 });
-System.register("vector", [], function(exports_10, context_10) {
+System.register("camera", ["vector"], function(exports_12, context_12) {
     "use strict";
-    var __moduleName = context_10 && context_10.id;
-    function scale(a, scale) {
-        return { x: a.x * scale, y: a.y * scale };
-    }
-    exports_10("scale", scale);
-    function add(a, b) {
-        return { x: a.x + b.x, y: a.y + b.y };
-    }
-    exports_10("add", add);
-    function subtract(a, b) {
-        return { x: a.x - b.x, y: a.y - b.y };
-    }
-    exports_10("subtract", subtract);
-    function rotate(a, angle) {
-        return {
-            x: a.x * Math.cos(angle) - a.y * Math.sin(angle),
-            y: a.x * Math.sin(angle) + a.y * Math.cos(angle)
-        };
-    }
-    exports_10("rotate", rotate);
-    function dotProduct(a, b) {
-        return a.x * b.x + a.y * b.y;
-    }
-    exports_10("dotProduct", dotProduct);
-    function magnitude(a) {
-        return Math.sqrt(a.x * a.x + a.y * a.y);
-    }
-    exports_10("magnitude", magnitude);
-    function normalize(a) {
-        var mag = magnitude(a);
-        return { x: a.x / mag, y: a.y / mag };
-    }
-    exports_10("normalize", normalize);
-    return {
-        setters:[],
-        execute: function() {
-        }
-    }
-});
-System.register("camera", ["vector"], function(exports_11, context_11) {
-    "use strict";
-    var __moduleName = context_11 && context_11.id;
-    var Vector;
+    var __moduleName = context_12 && context_12.id;
+    var vector_2;
     function Camera(screen) {
         this.x = 0;
         this.y = 0;
         this.width = screen.width;
         this.height = screen.height;
     }
-    exports_11("Camera", Camera);
+    exports_12("Camera", Camera);
     return {
         setters:[
-            function (Vector_1) {
-                Vector = Vector_1;
+            function (vector_2_1) {
+                vector_2 = vector_2_1;
             }],
         execute: function() {
             Camera.prototype.update = function (target) {
@@ -585,17 +719,17 @@ System.register("camera", ["vector"], function(exports_11, context_11) {
                     target.y < this.y + this.height);
             };
             Camera.prototype.toScreenCoordinates = function (worldCoordinates) {
-                return Vector.subtract(worldCoordinates, this);
+                return vector_2.Vector.subtract(worldCoordinates, this);
             };
             Camera.prototype.toWorldCoordinates = function (screenCoordinates) {
-                return Vector.add(screenCoordinates, this);
+                return vector_2.Vector.add(screenCoordinates, this);
             };
         }
     }
 });
-System.register("missile", [], function(exports_12, context_12) {
+System.register("missile", [], function(exports_13, context_13) {
     "use strict";
-    var __moduleName = context_12 && context_12.id;
+    var __moduleName = context_13 && context_13.id;
     var Missile;
     return {
         setters:[],
@@ -604,14 +738,14 @@ System.register("missile", [], function(exports_12, context_12) {
                 constructor(position) {
                 }
             };
-            exports_12("Missile", Missile);
+            exports_13("Missile", Missile);
         }
     }
 });
-System.register("player", ["vector", "missile"], function(exports_13, context_13) {
+System.register("player", ["vector", "missile"], function(exports_14, context_14) {
     "use strict";
-    var __moduleName = context_13 && context_13.id;
-    var Vector, missile_1;
+    var __moduleName = context_14 && context_14.id;
+    var vector_3, missile_1;
     var PLAYER_SPEED, BULLET_SPEED;
     function Player(bullets, missiles) {
         this.missiles = missiles;
@@ -623,11 +757,11 @@ System.register("player", ["vector", "missile"], function(exports_13, context_13
         this.img = new Image();
         this.img.src = 'assets/tyrian.shp.007D3C.png';
     }
-    exports_13("Player", Player);
+    exports_14("Player", Player);
     return {
         setters:[
-            function (Vector_2) {
-                Vector = Vector_2;
+            function (vector_3_1) {
+                vector_3 = vector_3_1;
             },
             function (missile_1_1) {
                 missile_1 = missile_1_1;
@@ -668,13 +802,13 @@ System.register("player", ["vector", "missile"], function(exports_13, context_13
                 ctx.restore();
             };
             Player.prototype.fireBullet = function (direction) {
-                var position = Vector.add(this.position, { x: 30, y: 30 });
-                var velocity = Vector.scale(Vector.normalize(direction), BULLET_SPEED);
+                var position = vector_3.Vector.add(this.position, { x: 30, y: 30 });
+                var velocity = vector_3.Vector.scale(vector_3.Vector.normalize(direction), BULLET_SPEED);
                 this.bullets.add(position, velocity);
             };
             Player.prototype.fireMissile = function () {
                 if (this.missileCount > 0) {
-                    var position = Vector.add(this.position, { x: 0, y: 30 });
+                    var position = vector_3.Vector.add(this.position, { x: 0, y: 30 });
                     var missile = new missile_1.Missile(position);
                     this.missiles.push(missile);
                     this.missileCount--;
@@ -683,62 +817,10 @@ System.register("player", ["vector", "missile"], function(exports_13, context_13
         }
     }
 });
-System.register("bullet_pool", [], function(exports_14, context_14) {
-    "use strict";
-    var __moduleName = context_14 && context_14.id;
-    function BulletPool(maxSize) {
-        this.pool = new Float32Array(4 * maxSize);
-        this.end = 0;
-        this.max = maxSize;
-    }
-    exports_14("BulletPool", BulletPool);
-    return {
-        setters:[],
-        execute: function() {
-            BulletPool.prototype.add = function (position, velocity) {
-                if (this.end < this.max) {
-                    this.pool[4 * this.end] = position.x;
-                    this.pool[4 * this.end + 1] = position.y;
-                    this.pool[4 * this.end + 2] = velocity.x;
-                    this.pool[4 * this.end + 3] = velocity.y;
-                    this.end++;
-                }
-            };
-            BulletPool.prototype.update = function (elapsedTime, callback) {
-                for (var i = 0; i < this.end; i++) {
-                    this.pool[4 * i] += this.pool[4 * i + 2];
-                    this.pool[4 * i + 1] += this.pool[4 * i + 3];
-                    if (callback && callback({
-                        x: this.pool[4 * i],
-                        y: this.pool[4 * i + 1]
-                    })) {
-                        this.pool[4 * i] = this.pool[4 * (this.end - 1)];
-                        this.pool[4 * i + 1] = this.pool[4 * (this.end - 1) + 1];
-                        this.pool[4 * i + 2] = this.pool[4 * (this.end - 1) + 2];
-                        this.pool[4 * i + 3] = this.pool[4 * (this.end - 1) + 3];
-                        this.end--;
-                        i--;
-                    }
-                }
-            };
-            BulletPool.prototype.render = function (elapsedTime, ctx) {
-                ctx.save();
-                ctx.beginPath();
-                ctx.fillStyle = "black";
-                for (var i = 0; i < this.end; i++) {
-                    ctx.moveTo(this.pool[4 * i], this.pool[4 * i + 1]);
-                    ctx.arc(this.pool[4 * i], this.pool[4 * i + 1], 2, 0, 2 * Math.PI);
-                }
-                ctx.fill();
-                ctx.restore();
-            };
-        }
-    }
-});
 System.register("app_", ["game", "camera", "player", "bullet_pool"], function(exports_15, context_15) {
     "use strict";
     var __moduleName = context_15 && context_15.id;
-    var game_2, camera_1, player_1, bullet_pool_1;
+    var game_2, camera_1, player_1, bullet_pool_2;
     var canvas, game, input, camera, bullets, missiles, player, masterLoop;
     function update(elapsedTime) {
         player.update(elapsedTime, input);
@@ -787,8 +869,8 @@ System.register("app_", ["game", "camera", "player", "bullet_pool"], function(ex
             function (player_1_1) {
                 player_1 = player_1_1;
             },
-            function (bullet_pool_1_1) {
-                bullet_pool_1 = bullet_pool_1_1;
+            function (bullet_pool_2_1) {
+                bullet_pool_2 = bullet_pool_2_1;
             }],
         execute: function() {
             canvas = document.getElementById('screen');
@@ -800,7 +882,7 @@ System.register("app_", ["game", "camera", "player", "bullet_pool"], function(ex
                 right: false
             };
             camera = new camera_1.Camera(canvas);
-            bullets = new bullet_pool_1.BulletPool(10);
+            bullets = new bullet_pool_2.BulletPool(10);
             missiles = [];
             player = new player_1.Player(bullets, missiles);
             window.onkeydown = function (event) {
