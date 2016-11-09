@@ -518,6 +518,9 @@ System.register("app", ["common/drawable", "common/mediaManager", "common/actor"
                     super(world);
                     this.last_bullet = 0;
                     this.bullet_pool = new bullet_pool_1.BulletPool(1000);
+                    this.health = 1;
+                    this.width = shipSprite.width / 10;
+                    this.height = shipSprite.height / 10;
                 }
                 *baseRenderState() {
                     while (true) {
@@ -542,6 +545,8 @@ System.register("app", ["common/drawable", "common/mediaManager", "common/actor"
                         else if (controller.input.left) {
                             this.x -= dt * mod;
                         }
+                        this.y = Math.max(0, Math.min(this.world.height - this.height, this.y));
+                        this.x = Math.max(0, Math.min(this.world.width - this.width, this.x));
                         if (controller.input.space) {
                             this.fire();
                         }
@@ -550,7 +555,7 @@ System.register("app", ["common/drawable", "common/mediaManager", "common/actor"
                 }
                 fire() {
                     if (this.last_bullet < performance.now() - 40) {
-                        this.bullet_pool.add({ x: this.x, y: this.y }, { x: 0, y: -3 });
+                        this.bullet_pool.add({ x: this.x + this.width / 2, y: this.y }, { x: 0, y: -3 });
                         this.last_bullet = performance.now();
                     }
                 }
@@ -569,7 +574,7 @@ System.register("app", ["common/drawable", "common/mediaManager", "common/actor"
                         ctx.fillStyle = 'grey';
                         ctx.fillRect(this.padding, this.padding, 8, height);
                         ctx.fillStyle = 'red';
-                        let missingLife = height - height * .9;
+                        let missingLife = height - height * this.player.health;
                         ctx.fillRect(this.padding, this.padding + missingLife, 8, height - missingLife);
                     }
                 }
@@ -622,6 +627,8 @@ System.register("app", ["common/drawable", "common/mediaManager", "common/actor"
                     this.width = 1200;
                     this.height = 800;
                     this.player = new PlayerShip(this);
+                    this.player.x = this.width / 2;
+                    this.player.y = this.height - 200;
                     this.enemies = [new AlienShip(this)];
                 }
                 *baseRenderState() {
