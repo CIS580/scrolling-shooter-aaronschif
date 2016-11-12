@@ -432,7 +432,7 @@ System.register("app", ["common/drawable", "common/mediaManager", "common/actor"
     "use strict";
     var __moduleName = context_10 && context_10.id;
     var drawable_2, mediaManager_1, actor_1, game_1, input_1, bullet_pool_1, vector_1;
-    var controller, mediaManager, cloudSprites, shipSprite, BackdropScene, PlayerShip, Hud, AlienShip, SSGame;
+    var controller, mediaManager, cloudSprites, shipSprite, Explosion, BackdropScene, PlayerShip, Hud, AlienShip, SSGame;
     return {
         setters:[
             function (drawable_2_1) {
@@ -466,6 +466,38 @@ System.register("app", ["common/drawable", "common/mediaManager", "common/actor"
                 mediaManager.fetchSprite('./assets/sun1.png'),
             ];
             shipSprite = mediaManager.fetchSprite('./assets/ship.png');
+            Explosion = class Explosion extends drawable_2.Drawable {
+                constructor(color, position) {
+                    super();
+                    this.color = color;
+                    this.particles = [];
+                }
+                *baseRenderState() {
+                    for (let i = 0; i < 20; i++) {
+                        this.particles.push({
+                            x: 200,
+                            y: 200,
+                            vx: Math.cos(i) * 2 + Math.random(),
+                            vy: Math.sin(i) * 2 + Math.random() });
+                    }
+                    while (true) {
+                        let { dt, ctx } = yield null;
+                        ctx.fillStyle = this.color;
+                        for (let p of this.particles) {
+                            if (p.vy < 6) {
+                                p.vy += .05;
+                            }
+                            if (p.vx < 0) {
+                                p.vx += .01;
+                            }
+                            else if (p.vx > 0) {
+                                p.vx -= .01;
+                            }
+                            ctx.fillRect(p.x += p.vx, p.y += p.vy, 2, 2);
+                        }
+                    }
+                }
+            };
             BackdropScene = class BackdropScene extends drawable_2.Drawable {
                 constructor(width, height) {
                     super();
@@ -634,9 +666,11 @@ System.register("app", ["common/drawable", "common/mediaManager", "common/actor"
                 *baseRenderState() {
                     let backdrop = new BackdropScene(this.width, this.height);
                     let hud = new Hud(this.player, this.width, this.height);
+                    let explosion = new Explosion('red', { x: 20, y: 20 });
                     while (true) {
                         let { dt, ctx } = yield null;
                         backdrop.render(dt, ctx);
+                        explosion.render(dt, ctx);
                         this.player.render(dt, ctx);
                         hud.render(dt, ctx);
                         for (let enemy of this.enemies) {

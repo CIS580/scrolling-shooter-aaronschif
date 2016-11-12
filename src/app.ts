@@ -21,6 +21,44 @@ const cloudSprites = [
 
 const shipSprite = mediaManager.fetchSprite('./assets/ship.png')
 
+
+class Explosion extends Drawable {
+    color
+    particles
+
+    constructor(color, position) {
+        super()
+        this.color = color
+        this.particles = []
+    }
+
+    *baseRenderState() {
+        for (let i=0; i<20; i++) {
+            this.particles.push({
+                x: 200,
+                y: 200,
+                vx: Math.cos(i) * 2 + Math.random(),
+                vy: Math.sin(i) * 2 + Math.random()})
+        }
+        while (true) {
+            let {dt, ctx} = yield null
+            ctx.fillStyle = this.color
+            for (let p of this.particles) {
+                if (p.vy < 6) {
+                    p.vy += .05
+                }
+                if (p.vx < 0) {
+                    p.vx += .01
+                } else if (p.vx > 0) {
+                    p.vx -= .01
+                }
+                ctx.fillRect(p.x += p.vx, p.y += p.vy, 2, 2)
+            }
+        }
+    }
+}
+
+
 class BackdropScene extends Drawable {
     width: number
     height: number
@@ -222,9 +260,11 @@ class SSGame extends Game {
     *baseRenderState() {
         let backdrop = new BackdropScene(this.width, this.height)
         let hud = new Hud(this.player, this.width, this.height)
+        let explosion = new Explosion('red', {x: 20, y: 20})
         while (true) {
             let {dt, ctx} = yield null
             backdrop.render(dt, ctx)
+            explosion.render(dt, ctx)
             this.player.render(dt, ctx)
             hud.render(dt, ctx)
             for (let enemy of this.enemies) {
