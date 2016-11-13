@@ -258,6 +258,7 @@ class SSGame extends Game {
     }
 
     *baseRenderState() {
+        yield* this.loadingScreenRenderState()
         let backdrop = new BackdropScene(this.width, this.height)
         let hud = new Hud(this.player, this.width, this.height)
         let explosion = new Explosion('red', {x: 20, y: 20})
@@ -270,6 +271,14 @@ class SSGame extends Game {
             for (let enemy of this.enemies) {
                 enemy.render(dt, ctx)
             }
+        }
+    }
+
+    *loadingScreenRenderState() {
+        let timeToEnd = performance.now() + 2000
+        while (timeToEnd > performance.now()) {
+            let {dt, ctx} = yield null
+            ctx.fillText("Scrolling Shooter", this.width/2, this.height/2)
         }
     }
 

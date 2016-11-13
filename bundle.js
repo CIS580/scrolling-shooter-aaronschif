@@ -664,6 +664,7 @@ System.register("app", ["common/drawable", "common/mediaManager", "common/actor"
                     this.enemies = [new AlienShip(this)];
                 }
                 *baseRenderState() {
+                    yield* this.loadingScreenRenderState();
                     let backdrop = new BackdropScene(this.width, this.height);
                     let hud = new Hud(this.player, this.width, this.height);
                     let explosion = new Explosion('red', { x: 20, y: 20 });
@@ -676,6 +677,13 @@ System.register("app", ["common/drawable", "common/mediaManager", "common/actor"
                         for (let enemy of this.enemies) {
                             enemy.render(dt, ctx);
                         }
+                    }
+                }
+                *loadingScreenRenderState() {
+                    let timeToEnd = performance.now() + 2000;
+                    while (timeToEnd > performance.now()) {
+                        let { dt, ctx } = yield null;
+                        ctx.fillText("Scrolling Shooter", this.width / 2, this.height / 2);
                     }
                 }
                 *baseControlState() {
